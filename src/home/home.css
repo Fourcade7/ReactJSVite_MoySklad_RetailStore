@@ -1,5 +1,32 @@
-
-
-h1{
+h1 {
     color: aqua;
 }
+
+/* transform: rotate(-90deg); */
+.arrow {
+
+    display: inline-block;
+    transition: transform 0.25s ease;
+}
+
+.arrow.rotate {
+    transform: rotate(90deg);
+}
+
+/**/
+
+
+.sidebar {
+    width: 220px;
+    /* background: #222; */
+    
+    transition: width 0.3s ease-out;
+    overflow: hidden;
+}
+
+.sidebar.closed {
+    width: 0px;
+}
+
+
+
