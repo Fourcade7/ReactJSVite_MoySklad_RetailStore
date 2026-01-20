@@ -6,10 +6,10 @@ const urlGetALlProducts = "http://localhost:3000/getallproducts"
 
 
 
-async function getAllProducts(){
+async function getAllProducts(offset){
 
     try{
-        let response = await fetch(urlGetALlProducts,{ 
+        let response = await fetch(`http://localhost:3000/getallproducts/${offset}`,{ 
             method:"GET"
 
         });

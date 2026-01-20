@@ -1,5 +1,5 @@
 
-import { Button,ListGroup,Row,Col, Navbar,Collapse,Form } from "react-bootstrap";
+import { Button,ListGroup,Row,Col, Navbar,Collapse,Form, Pagination } from "react-bootstrap";
 import "./home.css"
 import MyNavbarScreen from "../navbar/MyNavbar";
 
@@ -90,15 +90,22 @@ function ListGroupMenu() {
 function LeftContent(){
   const [checked, setChecked] = useState(false);
   const [products, setProducts] = useState([]);
+  const [pagNumber, setPageNumber] = useState(0);
+  const [activePage, setActivePage] = useState(1);
+  const [offset, setOffset] = useState(0);
 
 
   useEffect(()=>{
 
     async function load() {
       try{
-      const data = await getAllProducts();
+      const data = await getAllProducts(offset);
       setProducts(data.rows)
+      
+      console.log("Array length");
       console.log(data.rows.length);
+      const pNumber=Math.ceil(data.meta.size/data.meta.limit);
+      setPageNumber(pNumber);
       
       }catch(error){
         console.error('Xatolik:', error);
@@ -108,15 +115,14 @@ function LeftContent(){
 
     load();
 
-  },[]);
+  },[activePage]);
 
   return(
     <div>
-      <ListGroup className="overflow-auto"
-  style={{ maxHeight: '80vh' }}>
+      <ListGroup className="overflow-auto" style={{ maxHeight: '70vh' }}>
         {products && 
          products.map(item =>(
-            <ListGroup.Item action>
+            <ListGroup.Item key={item.id} action>
               <div className="d-flex align-items-center">
             <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path  d="M11.9996 2.125C12.2851 2.125 12.5459 2.28707 12.6722 2.54308L15.3264 7.9211L21.2614 8.78351C21.5439 8.82456 21.7786 9.02244 21.8669 9.29395C21.9551 9.56546 21.8815 9.86351 21.6771 10.0628L17.3825 14.249L18.3963 20.16C18.4445 20.4414 18.3289 20.7257 18.0979 20.8936C17.867 21.0614 17.5608 21.0835 17.3081 20.9506L11.9996 18.1598L6.69122 20.9506C6.43853 21.0835 6.13233 21.0614 5.90137 20.8936C5.67041 20.7257 5.55475 20.4414 5.603 20.16L6.61682 14.249L2.32222 10.0628C2.11779 9.86351 2.04421 9.56546 2.13243 9.29395C2.22065 9.02244 2.45536 8.82456 2.73788 8.78351L8.67288 7.9211L11.3271 2.54308C11.4534 2.28707 11.7142 2.125 11.9996 2.125ZM11.9996 4.56966L9.84348 8.93853C9.73423 9.15989 9.52306 9.31331 9.27878 9.34881L4.45745 10.0494L7.94619 13.4501C8.12296 13.6224 8.20362 13.8706 8.16189 14.1139L7.33831 18.9158L11.6506 16.6487C11.8691 16.5338 12.1302 16.5338 12.3486 16.6487L16.661 18.9158L15.8374 14.1139C15.7957 13.8706 15.8763 13.6224 16.0531 13.4501L19.5418 10.0494L14.7205 9.34881C14.4762 9.31331 14.2651 9.15989 14.1558 8.93853L11.9996 4.56966Z" fill="#323544"/>
@@ -127,9 +133,9 @@ function LeftContent(){
                 <p className="ms-auto fw-bold m-0 p-0">{(item.salePrices[0].value)/100} UZS</p>
               </div>
               <div className="d-flex align-items-center ms-3">
-                <p className="m-0 p-0">03167</p>
+                <p className="m-0 p-0">{item.barcodes?.[0]?.ean13 || "no barcode"}</p>
                 <img className="ms-3" src={imagekube} width="15" height="15" alt=""></img>
-                <small className="ms-2 p-0">150</small>
+                <small className="ms-2 p-0">{item.stock}</small>
                 <Form.Check
                   className="ms-auto m-0"
                   type="checkbox"
@@ -138,7 +144,7 @@ function LeftContent(){
                   checked={checked}
                   onChange={(e) => setChecked(e.target.checked)}
                 />
-                <small className=" px-2 badge text-bg-secondary">{(item.salePrices[1].value)/100}</small>
+                <small className=" px-2 badge text-bg-secondary">{(item.salePrices[1]?.value)/100 || 0}</small>
               </div>
             </div>
           </div>
@@ -149,6 +155,37 @@ function LeftContent(){
       
       
     </ListGroup>
+   
+    {
+      //offset = (page - 1) * limit
+        pagNumber > 0 && (
+          <Pagination className="mt-3">
+            {(() => {
+              const items = [];
+              for (let i = 1; i <= pagNumber; i++) {
+                items.push(
+                  <Pagination.Item
+                  onClick={()=>{
+                      setActivePage(i)
+                      console.log("offset");
+                      console.log((i-1)*500);
+                      setOffset((i-1)*500);
+                      
+                  }} 
+                  key={i} 
+                  active={activePage === i}>
+                    {i}
+                  </Pagination.Item>
+                );
+              }
+              return items;
+            })()}
+          </Pagination>
+        )
+      }
+
+      
+    
     </div>
   )
 }
