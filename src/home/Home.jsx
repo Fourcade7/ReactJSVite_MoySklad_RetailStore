@@ -1,5 +1,5 @@
 
-import { Button,ListGroup,Row,Col, Navbar,Collapse,Form, Pagination } from "react-bootstrap";
+import { Button,ListGroup,Row,Col, Navbar,Collapse,Form, Pagination,Dropdown } from "react-bootstrap";
 import "./home.css"
 import MyNavbarScreen from "../navbar/MyNavbar";
 
@@ -7,7 +7,7 @@ import moyskladlogo from "../assets/moyskladlogo.png"
 import nextarrow from "../assets/nextarrow.png"
 import imagekube from "../assets/image.png"
 import { useEffect, useState } from "react";
-import { getAllProducts } from "./HomeApi";
+import { getAllContragents, getAllProducts } from "./HomeApi";
 
 
 //#5bc4f1
@@ -87,23 +87,116 @@ function ListGroupMenu() {
     );
 }
 
-function LeftContent(){
+function UsersList() {
+
+
+  const [contragentList,setContragentList]= useState([]);
+  const [contragent,setContragent]= useState([]);
+  
+  useEffect(()=>{
+    async function load() {
+      try{
+        const data= await getAllContragents();
+        setContragentList(data.rows);
+        console.log(data);
+        
+      }catch(error){
+
+      }
+    }
+
+    load()
+  },[])
+
+  return (
+    <Dropdown>
+      <Dropdown.Toggle variant="light w-100 d-flex align-items-center justify-content-between" id="dropdown-basic">
+     
+      <Form.Control className='me-2' value={contragent}  type="text" placeholder="Имя контрагент или Номер телефона" />
+      </Dropdown.Toggle>
+
+      <Dropdown.Menu className="mt-1 w-100" align={"end"}>
+        {contragentList && 
+          contragentList.map(item =>(
+            <Dropdown.Item href="#/action-1"
+            active={contragent===item.name+" "+item?.phone}
+            onClick={()=>{
+              setContragent(item.name+" "+item?.phone)
+            }}
+            ><small>{item.name} {item.phone}</small></Dropdown.Item>
+
+          ))
+        
+
+        }
+        
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}
+
+function PaymentList() {
+  const [payment, setPayment] = useState("Способ оплаты");
+
+  const payments = [
+    "Наличные",
+    "Банковская карта",
+    "В долг",
+    "Click",
+    "Payme",
+    "Uzum",
+  ];
+
+  return (
+    <Dropdown className="mt-2">
+      <Dropdown.Toggle
+        variant="light"
+        className="w-100 d-flex align-items-center justify-content-between"
+      >
+        {payment}
+      </Dropdown.Toggle>
+
+      <Dropdown.Menu align="end" className="mt-1 w-100">
+        {payments.map((item) => (
+          <Dropdown.Item
+            key={item}
+            active={payment === item}
+            onClick={() => setPayment(item)}
+          >
+            {item}
+          </Dropdown.Item>
+        ))}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+}
+
+
+function LeftContent(props){
   const [checked, setChecked] = useState(false);
   const [products, setProducts] = useState([]);
   const [pagNumber, setPageNumber] = useState(0);
   const [activePage, setActivePage] = useState(1);
   const [offset, setOffset] = useState(0);
+  console.log("props");
+  //console.log(props.inputChange);
 
+  let searchReq=props.inputChange;
+  //console.log(searchReq);
+  
+  if(!searchReq){
+      searchReq="empty"
+  }
 
   useEffect(()=>{
 
     async function load() {
       try{
-      const data = await getAllProducts(offset);
+      const data = await getAllProducts(offset,searchReq);
       setProducts(data.rows)
       
       console.log("Array length");
-      console.log(data.rows.length);
+      console.log(data.rows?.length);
       const pNumber=Math.ceil(data.meta.size/data.meta.limit);
       setPageNumber(pNumber);
       
@@ -115,14 +208,20 @@ function LeftContent(){
 
     load();
 
-  },[activePage]);
+  },[activePage,props.inputChange]);
 
   return(
-    <div>
-      <ListGroup className="overflow-auto" style={{ maxHeight: '70vh' }}>
+    <div style={{ height: '80vh' }} className="d-flex flex-column align-items-between mt-1" >
+      <ListGroup className="overflow-auto" style={{ maxHeight: '70vh' }} >
         {products && 
          products.map(item =>(
-            <ListGroup.Item key={item.id} action>
+            <ListGroup.Item key={item.id} action
+            onClick={()=>{
+              //console.log(item.name);
+              props.click(item)
+              
+            }}
+            >
               <div className="d-flex align-items-center">
             <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path  d="M11.9996 2.125C12.2851 2.125 12.5459 2.28707 12.6722 2.54308L15.3264 7.9211L21.2614 8.78351C21.5439 8.82456 21.7786 9.02244 21.8669 9.29395C21.9551 9.56546 21.8815 9.86351 21.6771 10.0628L17.3825 14.249L18.3963 20.16C18.4445 20.4414 18.3289 20.7257 18.0979 20.8936C17.867 21.0614 17.5608 21.0835 17.3081 20.9506L11.9996 18.1598L6.69122 20.9506C6.43853 21.0835 6.13233 21.0614 5.90137 20.8936C5.67041 20.7257 5.55475 20.4414 5.603 20.16L6.61682 14.249L2.32222 10.0628C2.11779 9.86351 2.04421 9.56546 2.13243 9.29395C2.22065 9.02244 2.45536 8.82456 2.73788 8.78351L8.67288 7.9211L11.3271 2.54308C11.4534 2.28707 11.7142 2.125 11.9996 2.125ZM11.9996 4.56966L9.84348 8.93853C9.73423 9.15989 9.52306 9.31331 9.27878 9.34881L4.45745 10.0494L7.94619 13.4501C8.12296 13.6224 8.20362 13.8706 8.16189 14.1139L7.33831 18.9158L11.6506 16.6487C11.8691 16.5338 12.1302 16.5338 12.3486 16.6487L16.661 18.9158L15.8374 14.1139C15.7957 13.8706 15.8763 13.6224 16.0531 13.4501L19.5418 10.0494L14.7205 9.34881C14.4762 9.31331 14.2651 9.15989 14.1558 8.93853L11.9996 4.56966Z" fill="#323544"/>
@@ -136,15 +235,8 @@ function LeftContent(){
                 <p className="m-0 p-0">{item.barcodes?.[0]?.ean13 || "no barcode"}</p>
                 <img className="ms-3" src={imagekube} width="15" height="15" alt=""></img>
                 <small className="ms-2 p-0">{item.stock}</small>
-                <Form.Check
-                  className="ms-auto m-0"
-                  type="checkbox"
-                  id="agree"
-                  label=""
-                  checked={checked}
-                  onChange={(e) => setChecked(e.target.checked)}
-                />
-                <small className=" px-2 badge text-bg-secondary">{(item.salePrices[1]?.value)/100 || 0}</small>
+               
+                <small className="ms-auto px-2 badge text-bg-secondary">{(item.salePrices[1]?.value)/100 || 0}</small>
               </div>
             </div>
           </div>
@@ -159,7 +251,7 @@ function LeftContent(){
     {
       //offset = (page - 1) * limit
         pagNumber > 0 && (
-          <Pagination className="mt-3">
+          <Pagination className="mt-auto">
             {(() => {
               const items = [];
               for (let i = 1; i <= pagNumber; i++) {
@@ -189,19 +281,203 @@ function LeftContent(){
     </div>
   )
 }
+function CenterContent(props){
+  const [checked, setChecked] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [pagNumber, setPageNumber] = useState(0);
+  const [activePage, setActivePage] = useState(1);
+  const [offset, setOffset] = useState(0);
+  console.log("props");
+  //console.log(props.inputChange);
 
-function MainContent() {
+  let searchReq=props.inputChange;
+  //console.log(searchReq);
+  
+  if(!searchReq){
+      searchReq="empty"
+  }
+
+  useEffect(()=>{
+
+    async function load() {
+      try{
+      const data = await getAllProducts(offset,searchReq);
+      setProducts(data.rows)
+      
+      console.log("Array length");
+      console.log(data.rows?.length);
+      const pNumber=Math.ceil(data.meta.size/data.meta.limit);
+      setPageNumber(pNumber);
+      
+      }catch(error){
+        console.error('Xatolik:', error);
+      }
+     
+    }
+
+    //load();
+
+  },[activePage,props.inputChange]);
+
+  return(
+    <div style={{ height: '80vh' }} className="d-flex flex-column align-items-between mt-1" >
+      <ListGroup className="overflow-auto" style={{ maxHeight: '70vh' }}>
+        {props.itemList && 
+         props.itemList.map(item =>(
+            <ListGroup.Item 
+           
+            key={item.id} className="shadow bg-body-tertiary">
+              <div className="d-flex align-items-center p-0 m-0">
+            
+            <div className="d-flex flex-column lh-2 w-100">
+              <div className="d-flex ">
+                <p className="m-0 p-0">{item.name}</p>
+                <p className="ms-auto fw-bold m-0 p-0">{(item.salePrices[0].value)/100} UZS</p>
+              </div>
+              <div className="d-flex align-items-center">
+                <p className="m-0 p-0">{item.barcodes?.[0]?.ean13 || "no barcode"}</p>
+                <img className="ms-2" src={imagekube} width="15" height="15" alt=""></img>
+                <small className="ms-2 p-0">{item.stock}</small>
+                <Form.Check
+                  className="ms-auto m-0"
+                  type="checkbox"
+                  id="agree"
+                  label=""
+                  checked={checked}
+                  onChange={(e) => setChecked(e.target.checked)}
+                />
+                <small className=" px-2 badge text-bg-secondary">{(item.salePrices[1]?.value)/100 || 0}</small>
+              </div>
+            </div>
+            <svg
+            onClick={() => {props.clickDelete(item.id)}}
+            className="ms-3" type="submit" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5.9545 5.95548C6.39384 5.51614 7.10616 5.51614 7.5455 5.95548L11.999 10.409L16.4524 5.95561C16.8918 5.51627 17.6041 5.51627 18.0434 5.95561C18.4827 6.39495 18.4827 7.10726 18.0434 7.5466L13.59 12L18.0434 16.4534C18.4827 16.8927 18.4827 17.605 18.0434 18.0444C17.6041 18.4837 16.8918 18.4837 16.4524 18.0444L11.999 13.591L7.5455 18.0445C7.10616 18.4839 6.39384 18.4839 5.9545 18.0445C5.51517 17.6052 5.51516 16.8929 5.9545 16.4535L10.408 12L5.9545 7.54647C5.51516 7.10713 5.51517 6.39482 5.9545 5.95548Z" fill="red"/>
+            </svg>
+
+          </div>
+            </ListGroup.Item>
+         ))
+          
+        }
+      
+      
+    </ListGroup>
+   
+   
+
+      
+    
+    </div>
+  )
+}
+
+function RightContent(props){
+  const [checked, setChecked] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [pagNumber, setPageNumber] = useState(0);
+  const [activePage, setActivePage] = useState(1);
+  const [offset, setOffset] = useState(0);
+  console.log("props");
+  //console.log(props.inputChange);
+
+  let searchReq=props.inputChange;
+  //console.log(searchReq);
+  
+  if(!searchReq){
+      searchReq="empty"
+  }
+
+  useEffect(()=>{
+
+    async function load() {
+      try{
+      const data = await getAllProducts(offset,searchReq);
+      setProducts(data.rows)
+      
+      console.log("Array length");
+      console.log(data.rows?.length);
+      const pNumber=Math.ceil(data.meta.size/data.meta.limit);
+      setPageNumber(pNumber);
+      
+      }catch(error){
+        console.error('Xatolik:', error);
+      }
+     
+    }
+
+    load();
+
+  },[activePage,props.inputChange]);
+
+  return(
+    <div style={{ height: '80vh' }} className="d-flex flex-column align-items-between mt-1" >
+      
+   <UsersList></UsersList>
+   <PaymentList></PaymentList>
+   <Form.Control className='mt-2'  type="text" placeholder="Сумма скидки" />
+    <Button className="mt-auto m-0 p-4">
+    <h4 className="m-0 p-0">Итого: 167.000</h4>
+    </Button>
+
+      
+    
+    </div>
+  )
+}
+
+function MainContent(props) {
+ 
+  const [items,setItems]=useState([]);
+  // const handleClick = (item)=>{
+  //   const checkItem= items.find(it => it.id===item.id);
+  //   if(checkItem){
+  //     //setItems(prev => [...prev,checkItem.stock+1])
+  //     console.log("topildi");
+      
+  //   }else{
+  //     console.log(item.name);
+  //   setItems(prev => [...prev,item])
+  //   }
+    
+    
+  // }
+
+  
+  const handleClick = (item)=>{
+    //const checkItem= items.find(it => it.id===item.id);
+    setItems(prev =>{
+      const checkItem= prev.find(it => it.id===item.id);
+      if(checkItem){
+        return prev.map(it=> it.id===item.id ? {...it,stock:it.stock+1}:it);
+      }else{
+        console.log(item.name);
+       return [...prev,{...item,stock:1}]
+      }
+
+    })
+        
+  }
+  const handleDelete = (id)=>{
+    console.log(id);
+    
+    setItems(prev => prev.filter(item => item.id !==id))
+  }
+  
     return (
-      <div className="p-3 d-flex h-100">
-        <Row className="w-100 g-1">
+      <div className="ps-3 d-flex h-100">
+        <Row className="w-100 gx-2 cols-3">
           <Col>
-            <LeftContent></LeftContent>
+          <small>Товары</small>
+          <LeftContent inputChange={props.inputChange} click={handleClick} ></LeftContent>
           </Col>
           <Col>
-           
+          <small>Корзина</small>
+           <CenterContent itemList={items} clickDelete={handleDelete}></CenterContent>
           </Col>
           <Col>
-           
+          <small>Параметры продаж</small>
+           <RightContent></RightContent>
           </Col>
         </Row>
       </div>
@@ -212,14 +488,21 @@ function MainContent() {
 function HomeScreen(){
 
   const [open, setOpen] = useState(true);
+  const [inputValue, setInputValue] = useState("");
 
   const clickable=()=>{
     console.log("clickable function");
     setOpen(!open)
     
   }
+  const handleChange=(event)=>{
+    event.preventDefault();
+    //console.log(event.target.value);
+    setInputValue(event.target.value)
+    
+  };
     return(
-        <div className="d-flex vh-100 overflow-hidden" >
+        <div className="d-flex vh-100 overflow-hidden">
             
             
                 <Col className={`col-3 sidebar ${open ? "sidebar":"closed"}`} style={{backgroundColor:"#1f75a8"}}>
@@ -227,9 +510,9 @@ function HomeScreen(){
                 </Col>
 
                 <Col className="border-start">
-                <MyNavbarScreen hambugerMenuClick={clickable}></MyNavbarScreen>
+                <MyNavbarScreen hambugerMenuClick={clickable} inputChange={handleChange}></MyNavbarScreen>
                 
-                <MainContent></MainContent>
+                <MainContent inputChange={inputValue}></MainContent>
                 </Col>
            
             <div>
