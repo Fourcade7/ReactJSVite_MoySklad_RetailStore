@@ -1,9 +1,11 @@
 
-import { Button,ListGroup,Row,Col, Navbar,Collapse,Form, Pagination,Dropdown } from "react-bootstrap";
+import { Button,ListGroup,Row,Col, Navbar,Collapse,Form, Pagination,Dropdown,Spinner,ProgressBar, Fade } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import "./home.css"
 import MyNavbarScreen from "../navbar/MyNavbar";
 
 import moyskladlogo from "../assets/moyskladlogo.png"
+import salesway from "../assets/salesway.jpg"
 import nextarrow from "../assets/nextarrow.png"
 import imagekube from "../assets/image.png"
 import { useEffect, useState } from "react";
@@ -13,6 +15,7 @@ import { getAllContragents, getAllProducts } from "./HomeApi";
 //#5bc4f1
 function ListGroupMenu() {
 
+
   const [open, setOpen] = useState(false);
     return (
       <ListGroup className="rounded-0  px-2" style={{backgroundColor:"#1f75a8"}}>
@@ -20,8 +23,8 @@ function ListGroupMenu() {
         
         
         <div className="d-flex w-100 align-items-center justify-content-center" style={{height:"56px",backgroundColor:"#1f75a8"}}>
-        <img width={25} height={25} src={moyskladlogo} alt="logo" />
-        <h6 className="ms-2 my-0 text-white">МойСклад Касса</h6>
+        <img className="rounded-circle border border-2 border-warning" width={35} height={35} src={salesway} alt="logo" />
+        <h6 className="ms-2 my-0 text-white">SalesWay Касса</h6>
         </div>
         
         <ListGroup.Item action onClick={() => setOpen(!open)} style={{backgroundColor:"#3089b0"}}  aria-expanded={open} className="d-flex align-items-center border-primaryx border-0 rounded">
@@ -173,6 +176,7 @@ function PaymentList() {
 
 
 function LeftContent(props){
+  const [show, setShow] = useState(false);
   const [checked, setChecked] = useState(false);
   const [products, setProducts] = useState([]);
   const [pagNumber, setPageNumber] = useState(0);
@@ -192,16 +196,20 @@ function LeftContent(props){
 
     async function load() {
       try{
+        setShow(true)
       const data = await getAllProducts(offset,searchReq);
       setProducts(data.rows)
+      
       
       console.log("Array length");
       console.log(data.rows?.length);
       const pNumber=Math.ceil(data.meta.size/data.meta.limit);
       setPageNumber(pNumber);
+      setShow(false)
       
       }catch(error){
         console.error('Xatolik:', error);
+        setShow(false)
       }
      
     }
@@ -229,7 +237,7 @@ function LeftContent(props){
             <div className="d-flex flex-column lh-2 w-100">
               <div className="d-flex ms-3">
                 <p className="m-0 p-0">{item.name}</p>
-                <p className="ms-auto fw-bold m-0 p-0">{(item.salePrices[0].value)/100} UZS</p>
+                <p className="ms-auto fw-bold m-0 p-0">{((item.salePrices[0].value)/100).toLocaleString("uz-UZ")} UZS</p>
               </div>
               <div className="d-flex align-items-center ms-3">
                 <p className="m-0 p-0">{item.barcodes?.[0]?.ean13 || "no barcode"}</p>
@@ -275,6 +283,20 @@ function LeftContent(props){
           </Pagination>
         )
       }
+
+        <Modal show={show} onHide={() => setShow(false)} centered>
+                        <Modal.Header closeButton>
+                        <Modal.Title>Подождите</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                          <div className="d-flex flex-column">
+                            <Spinner variant="primary" className="mx-auto" animation="border" />
+                            <small className="mx-auto mt-2">Пожалуйста, подождите, пока идет загрузка на сервер.</small>
+                            <ProgressBar className="mt-3" animated  variant="primary" now={100} />
+                          </div>
+                        </Modal.Body>
+                        
+          </Modal>
 
       
     
@@ -332,21 +354,48 @@ function CenterContent(props){
             <div className="d-flex flex-column lh-2 w-100">
               <div className="d-flex ">
                 <p className="m-0 p-0">{item.name}</p>
-                <p className="ms-auto fw-bold m-0 p-0">{(item.salePrices[0].value)/100} UZS</p>
+                <p className={`ms-auto fw-bold m-0 p-0 ${item.archived ? 'text-decoration-line-through' : ''}`}>{!item.archived ? (((item.salePrices[0].value)/100)*item.stock):((item.salePrices[0].value)/100)*item.stock.toLocaleString("uz-UZ")} UZS</p>
               </div>
-              <div className="d-flex align-items-center">
-                <p className="m-0 p-0">{item.barcodes?.[0]?.ean13 || "no barcode"}</p>
-                <img className="ms-2" src={imagekube} width="15" height="15" alt=""></img>
+              <div className="d-flex align-items-center mt-2">
+                
+                <img className="" src={imagekube} width="15" height="15" alt=""></img>
+                <Button
+                onClick={()=>{
+                  props.handleMinusClick(item)
+                   
+                 }}
+                className="p-0 ms-3 d-flex" variant="outline-danger">
+                <svg class="mx-1 p-0" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <path d="M4.875 12C4.875 11.3787 5.37868 10.875 6 10.875H18.0007C18.622 10.875 19.1257 11.3787 19.1257 12C19.1257 12.6213 18.622 13.125 18.0007 13.125H6C5.37868 13.125 4.875 12.6213 4.875 12Z" fill="#323544"/>
+                       </svg>
+                </Button> 
                 <small className="ms-2 p-0">{item.stock}</small>
+                <Button
+                onClick={()=>{
+                  props.handleAddClick(item)
+                   
+                 }}
+                className="p-0 ms-2 d-flex" variant="outline-primary">
+                <svg class="mx-1 p-0" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.0002 4.875C12.6216 4.875 13.1252 5.37868 13.1252 6V10.8752H18.0007C18.622 10.8752 19.1257 11.3789 19.1257 12.0002C19.1257 12.6216 18.622 13.1252 18.0007 13.1252H13.1252V18.0007C13.1252 18.622 12.6216 19.1257 12.0002 19.1257C11.3789 19.1257 10.8752 18.622 10.8752 18.0007V13.1252H6C5.37868 13.1252 4.875 12.6216 4.875 12.0002C4.875 11.3789 5.37868 10.8752 6 10.8752H10.8752V6C10.8752 5.37868 11.3789 4.875 12.0002 4.875Z" fill="#323544"/>
+                      </svg> 
+                </Button>
                 <Form.Check
                   className="ms-auto m-0"
                   type="checkbox"
                   id="agree"
                   label=""
-                  checked={checked}
-                  onChange={(e) => setChecked(e.target.checked)}
+                  checked={item.archived}
+                  // onChange={(e) => setChecked(e.target.checked)}
+                  onClick={() => props.clickCheckBox(item)}
                 />
-                <small className=" px-2 badge text-bg-secondary">{(item.salePrices[1]?.value)/100 || 0}</small>
+                  <small className="px-2 badge text-bg-secondary ">
+                    {(
+                      item.archived 
+                        ? (item.salePrices[1]?.value ?? 0) / 100 
+                        : (item.salePrices[1]?.value ?? 0) /100
+                    )*item.stock.toLocaleString("uz-UZ")}
+                  </small>
               </div>
             </div>
             <svg
@@ -373,7 +422,8 @@ function CenterContent(props){
 }
 
 function RightContent(props){
-  const [checked, setChecked] = useState(false);
+  
+  const [totalPrice, setTotalPrice] = useState(0);
   const [products, setProducts] = useState([]);
   const [pagNumber, setPageNumber] = useState(0);
   const [activePage, setActivePage] = useState(1);
@@ -410,14 +460,30 @@ function RightContent(props){
 
   },[activePage,props.inputChange]);
 
+  
+
+  
+  useEffect(() => {
+    const sum = props.itemList.reduce(
+      (acc, it) => acc + ((it.archived ? (it.salePrices[1].value):(it.salePrices[0].value)) * it.stock),
+      0
+    );
+    setTotalPrice(sum/100);
+  }, [props.itemList]);
+
   return(
     <div style={{ height: '80vh' }} className="d-flex flex-column align-items-between mt-1" >
       
    <UsersList></UsersList>
    <PaymentList></PaymentList>
    <Form.Control className='mt-2'  type="text" placeholder="Сумма скидки" />
-    <Button className="mt-auto m-0 p-4">
-    <h4 className="m-0 p-0">Итого: 167.000</h4>
+    <Button
+    
+    className="mt-auto m-0 p-4">
+    <h4 className="m-0 p-0">
+      Итого: {totalPrice.toLocaleString("uz-UZ")} UZS
+      
+      </h4>
     </Button>
 
       
@@ -463,6 +529,32 @@ function MainContent(props) {
     
     setItems(prev => prev.filter(item => item.id !==id))
   }
+
+  const handleCheckBox= (item)=>{
+    setItems(prev =>{
+       
+      
+      return   prev.map(it=> it.id===item.id ? {...it,archived:!it.archived}:it);
+     
+
+    })
+  }
+
+  const handleAdd = (item)=>{
+    //const checkItem= items.find(it => it.id===item.id);
+    setItems(prev =>{
+      
+        return prev.map(it=> it.id===item.id ? {...it,stock:it.stock+1}:it);
+
+    })}
+
+    const handleMinus = (item)=>{
+      //const checkItem= items.find(it => it.id===item.id);
+      setItems(prev =>{
+        
+          return prev.map(it=> it.id===item.id ? {...it,stock:it.stock > 1 ? it.stock-1:it.stock}:it);
+  
+    })}
   
     return (
       <div className="ps-3 d-flex h-100">
@@ -473,11 +565,11 @@ function MainContent(props) {
           </Col>
           <Col>
           <small>Корзина</small>
-           <CenterContent itemList={items} clickDelete={handleDelete}></CenterContent>
+           <CenterContent itemList={items} clickDelete={handleDelete} clickCheckBox ={handleCheckBox} handleAddClick={handleAdd} handleMinusClick={handleMinus}></CenterContent>
           </Col>
           <Col>
           <small>Параметры продаж</small>
-           <RightContent></RightContent>
+           <RightContent itemList={items}></RightContent>
           </Col>
         </Row>
       </div>
